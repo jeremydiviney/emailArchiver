@@ -53,7 +53,7 @@ setInterval(function(){
         getEmails(1);
         getEmails(2);
 
-    },2550);
+    },2500);
 
 
     function openInbox(imap,cb) {
