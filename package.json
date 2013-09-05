@@ -8,6 +8,8 @@
         "request": "2.x",
         "mongoskin": "0.6.x",
         "connect-mongo":"0.x",
+        "consolidate": "0.x",
+        "handlebars": "1.x",
         "cluster":"0.7.x",
         "imap": "0.8.x",
         "mailparser": "0.3.x",
