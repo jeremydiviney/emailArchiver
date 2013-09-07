@@ -5,6 +5,8 @@ var express = require('express');
 var cluster = require('cluster');
 var consolidate = require('consolidate');
 var Handlebars = require('handlebars');
+var mongo = require('mongoskin');
+var db = mongo.db('localhost:27017/emailArch?auto_reconnect');
 
 var numCPUs = 50;
 
@@ -27,7 +29,7 @@ app.use(express.bodyParser({
 app.use(express.cookieParser());
 app.use(express.static(__dirname + '/public'));
 
-var partials = __dirname + '\\templates\\partials\\';
+var partials = __dirname + '/templates/partials/';
 fs.readdirSync(partials).forEach(function(file) {
     var source = fs.readFileSync(partials + file, 'utf8');
     var partial = /(.+)\.html/.exec(file).pop();
@@ -77,17 +79,52 @@ fs.readdirSync(partials).forEach(function(file) {
 //    },12500);
 
     app.get('/archAccounts/add',function(req, res){
-        res.send(200);
+
+        getTemplate('addArchiveAccount',{},function(templateHTML){
+            console.log(templateHTML);
+            res.send(templateHTML);
+        });
+
     });
 
     app.post('/archAccounts/add',function(req, res){
-        res.send(200);
+
+        var collection = db.collection('archiveAccounts');
+
+        collection.insert({
+            host:req.body.host,
+            userName:req.body.userName,
+            password:req.body.pwd,
+            port:req.body.port,
+            maxUID:0
+        },function(err,docs){
+            res.redirect('/archAccounts/add');
+        });
     });
 
     // Setup 404 Route
     app.get('*', function(req, res) {
         res.send(404, 'File not found.');
     });
+
+
+    var templateStore = {};
+
+    var getTemplate = function(templateName,contextData,cb){
+
+        if(templateStore[templateName]){
+            cb(templateStore[templateName](contextData));
+        }else{
+            fs.readFile(__dirname  + '/templates/' + templateName + '.html',  'utf8',function(err, data) {
+                if (err) {
+                    throw err;
+                }
+                templateStore[templateName] = Handlebars.compile(data);
+                cb(templateStore[templateName](contextData));
+            });
+        }
+
+    }
 
     // Start Server
 
