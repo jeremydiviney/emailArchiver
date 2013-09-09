@@ -67,7 +67,7 @@ fs.readdirSync(partials).forEach(function(file) {
     //    })
     //}));
 
-    require('./api/v0');
+   require('./api/v0').init(app);
 
 //collection.remove();
 
@@ -78,11 +78,27 @@ fs.readdirSync(partials).forEach(function(file) {
 //        imapProc.getEmails(2);
 //    },12500);
 
-    app.get('/archAccounts/add',function(req, res){
+app.get('/',function(req, res){
 
-        getTemplate('addArchiveAccount',{},function(templateHTML){
-            console.log(templateHTML);
-            res.send(templateHTML);
+    getContextData(req,
+        {}
+        ,function(req){
+            getTemplate('dashboard',req.contextData,function(templateHTML){
+                res.send(templateHTML);
+            });
+        });
+
+});
+
+
+    app.get('/archAccounts',function(req, res){
+
+        getContextData(req,
+            {archAccounts:'http://localhost:1223/api/v0/archAccounts'}
+            ,function(req){
+                getTemplate('archiveAccounts',req.contextData,function(templateHTML){
+                    res.send(templateHTML);
+                });
         });
 
     });
@@ -98,7 +114,17 @@ fs.readdirSync(partials).forEach(function(file) {
             port:req.body.port,
             maxUID:0
         },function(err,docs){
-            res.redirect('/archAccounts/add');
+            res.redirect('/archAccounts/');
+        });
+    });
+
+    app.get('/archAccounts/remove/:id',function(req, res){
+
+        var collection = db.collection('archiveAccounts');
+        console.log("REMOVE ID:",req.params.id);
+        collection.removeById(req.params.id
+        ,function(err,count){
+            res.redirect('/archAccounts/');
         });
     });
 
@@ -106,7 +132,6 @@ fs.readdirSync(partials).forEach(function(file) {
     app.get('*', function(req, res) {
         res.send(404, 'File not found.');
     });
-
 
     var templateStore = {};
 
@@ -126,9 +151,62 @@ fs.readdirSync(partials).forEach(function(file) {
 
     }
 
-    // Start Server
 
-    app.listen(1223);
-    console.log('Listening on Port 1221.');
+var getContextData = function(req,apiList,cb){
+    var cnt = 0;
+    req.conextFetchCount = 0;
+
+    //console.log('http://localhost:1221/api/v1/firms/' + req.session.domain + "?key=b4t123");
+    //console.log('http://localhost:1221/api/v1/users/' + req.session.user + "?key=b4t123");
+
+//    // Determine subdomain.
+//    var hosts = req.host.split('.');
+//    if (hosts.length === 3) {
+//        req.firm = hosts[0];
+//    }
+
+//    var contextList = {
+//        strings: 'http://localhost:1221/api/v0/i18n?lang=en',
+//        company: 'http://localhost:1221/api/v0/company',
+//        firm: 'http://localhost:1221/api/v1/firms/' + req.session.domain + "?key=b4t123",
+//        user: 'http://localhost:1221/api/v1/users/' + req.session.user + "?key=b4t123"
+//    }
+
+    for(var i in apiList){
+        cnt++;
+        fetchCoreData(apiList[i],i,req,cb);
+    }
+
+    if(cnt === 0){
+        req.contextData = req.contextData || {};
+        cb(req);
+    }
+
+};
+
+var fetchCoreData = function(url,name,req,cb){
+
+    req.conextFetchCount++;
+
+    request.get({uri:url}, function(err, r, body) {
+
+        req.conextFetchCount--;
+        req.contextData = req.contextData || {};
+        if (!err) {
+            req.contextData[name] = JSON.parse(body);
+        }
+
+        if(req.conextFetchCount === 0){
+            cb(req);
+        }
+
+    });
+
+};
+
+// Start Server
+
+app.listen(1223);
+console.log('Listening on Port 1221.');
 
 //}
