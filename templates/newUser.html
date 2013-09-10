@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create New Account</title>
+</head>
+<body>
+
+{{> header}}
+
+<form method="POST">
+    <fieldset>
+        {{#if error}}<p><strong style="color:crimson;">{{error}}</strong></p>{{/if}}
+        <legend>Create New User</legend>
+        <p><label for="email">Email</label> <input type="email" name="email" id="email"></p>
+        <p><label for="first_name">First Name</label> <input type="text" name="first_name" id="first_name"></p>
+        <p><label for="last_name">Last Name</label> <input type="text" name="last_name" id="last_name"></p>
+        <p><label for="password">Password</label> <input type="password" name="password" id="password"></p>
+        <p><button type="submit">Create User</button></p>
+    </fieldset>
+</form>
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+{{> header}}
+
+<body class="cp-login">
+
+<div class="grid">
+    <div class="grid-row">
+        <div class="grid-cell" data-span="4">
+
+            <div class="cp-login-area">
+                {{#if error}}
+                <div class="cp-login-error">{{error}}</div>
+                {{/if}}
+
+                <div class="cp-login-form">
+
+                    <h2>Welcome, please log in.</h2>
+
+                    <form method="POST" action="/login">
+
+                        <input type="hidden" name="domain" id="domain" value="{{firm.domain}}">
+                        <input type="hidden" name="firmid" id="firmid" value="{{firm._id}}">
+
+                        <p>
+                            <label for="email">Email</label>
+                            <input name="email" id="email" type="email" placeholder="e-mail">
+                        </p>
+
+                        <p>
+                            <label for="password">Password</label>
+                            <input id="password" name="password" type="password" placeholder="password">
+                        </p>
+
+                        <p class="cp-align-right">
+                            <button type="submit">Login</button>
+                        </p>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>

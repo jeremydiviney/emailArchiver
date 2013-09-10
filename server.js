@@ -7,34 +7,9 @@ var consolidate = require('consolidate');
 var Handlebars = require('handlebars');
 var mongo = require('mongoskin');
 var db = mongo.db('localhost:27017/emailArch?auto_reconnect');
+var crypto = require('crypto');
 
 var numCPUs = 50;
-
-
-var app = express();
-
-// Configure Server Variables
-app.engine('html', consolidate.handlebars);
-app.set('view engine', 'html');
-app.set('views', __dirname + '/public/templates');
-
-// Configure Environmental Variables
-
-app.use(express.compress());
-app.use(express.bodyParser({
-    keepExtensions: true,
-    limit: 10000000, // 10M limit.
-    defer: true
-}));
-app.use(express.cookieParser());
-app.use(express.static(__dirname + '/public'));
-
-var partials = __dirname + '/templates/partials/';
-fs.readdirSync(partials).forEach(function(file) {
-    var source = fs.readFileSync(partials + file, 'utf8');
-    var partial = /(.+)\.html/.exec(file).pop();
-    Handlebars.registerPartial(partial, source);
-});
 
 // Initialize Server and Session Storage
 
@@ -48,7 +23,25 @@ fs.readdirSync(partials).forEach(function(file) {
 //}else{
 
 
-    var app = express();
+// Configure Server Variables
+var app = express();
+
+app.engine('html', consolidate.handlebars);
+app.set('view engine', 'html');
+app.set('views', __dirname + '/public/templates');
+
+// Configure Environmental Variables
+
+var partials = __dirname + '/templates/partials/';
+fs.readdirSync(partials).forEach(function(file) {
+    var source = fs.readFileSync(partials + file, 'utf8');
+    var partial = /(.+)\.html/.exec(file).pop();
+    Handlebars.registerPartial(partial, source);
+});
+
+
+
+
     var MongoStore = require('connect-mongo')(express);
 
     app.use(express.compress());
@@ -60,12 +53,12 @@ fs.readdirSync(partials).forEach(function(file) {
 
     app.use(express.cookieParser());
     app.use(express.static(__dirname + '/public'));
-    //app.use(express.session({
-    //    secret: 'zIxlVlz01WU6bmNyys5F',
-    //    store: new MongoStore({
-    //        db: 'client-portal'
-    //    })
-    //}));
+    app.use(express.session({
+        secret: 'z12#D23VlKN@#D#*(D()yys5F',
+        store: new MongoStore({
+            db: 'emailArchSessions'
+        })
+    }));
 
    require('./api/v0').init(app);
 
@@ -78,18 +71,135 @@ fs.readdirSync(partials).forEach(function(file) {
 //        imapProc.getEmails(2);
 //    },12500);
 
-app.get('/',function(req, res){
-
-    getContextData(req,
-        {}
-        ,function(req){
-            getTemplate('dashboard',req.contextData,function(templateHTML){
-                res.send(templateHTML);
+    app.get('/',function(req, res){
+            getContextData(req,
+            {}
+            ,function(req){
+                getTemplate('dashboard',req.contextData,function(templateHTML){
+                    res.send(templateHTML);
+                });
             });
-        });
+    });
+
+
+app.post('/login', function(req, res) {
+
+    db.collection('users').findOne({
+        email: req.body.email
+    }, function(err, user) {
+
+        if (user) {
+
+            var pass = crypto.createHmac('sha512', user.salt).update(req.body.password).digest('hex');
+
+            if (pass === user.password) {
+
+                if (err) { res.redirect('/login?error=' + encodeURIComponent('There was an error. Please try again.')); }
+
+                // Check if user has access to specified firm.
+
+                if (user.firms && user.firms.indexOf(req.body.firmid) > -1) {
+                    req.session.user = user._id;
+                    req.session.email = user.email;
+                    req.session.accountId = user.accountId;
+                    res.redirect('/');
+                } else {
+                    res.redirect('/login?error=' + encodeURIComponent('No account found for that username and password.'));
+                }
+
+            } else {
+                res.redirect('/login?error=' + encodeURIComponent('No account found for that username and password.'));
+            }
+
+        } else {
+            res.redirect('/login?error=' + encodeURIComponent('No account found for that username and password.'));
+        }
+
+    });
 
 });
 
+    app.get('/login', function(req, res) {
+        getContextData(req,
+            {}
+            ,function(req){
+                req.contextData.error = req.query.error;
+                getTemplate('login',req.contextData,function(templateHTML){
+                    res.send(templateHTML);
+                });
+            });
+    });
+
+
+    var createUser = function (req) {
+
+        var s4 = function() {
+            return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+        };
+
+        var salt = s4() + s4() + s4() + s4();
+
+        var obj = req.body;
+
+        obj.active = true;
+        obj.salt = salt;
+        obj.password = crypto.createHmac('sha512', salt).update(req.body.password).digest('hex');
+
+        if (!obj.email || !obj.password) { return false; }
+
+        return obj;
+
+    };
+
+    var addUser = function(req, res) {
+
+        var user = createUser(req);
+        var collection = db.collection('users');
+
+        if (!user) {
+            res.redirect('/newAccount?error=' + encodeURIComponent('Invalid user object.'));
+        }
+
+        // Check if user already exists.
+        collection.findOne({ email: user.email }, function(err, current) {
+            if (err) {
+                res.send(err);
+            } else {
+                if (current) {
+                    res.redirect('/newAccount?error=' + encodeURIComponent('User already exists'));
+                } else {
+                    collection.save(user, { safe: true }, function(err, result) {
+                        if (err) {  res.redirect('/newAccount?error=' + encodeURIComponent(JSON.stringify(err))); }
+                        res.redirect("/login");
+                    });
+                }
+            }
+
+        });
+
+    };
+
+
+    app.get('/newAccount',function(req, res){
+        getContextData(req,
+            {}
+            ,function(req){
+                req.contextData.error = req.query.error;
+                getTemplate('newUser',req.contextData,function(templateHTML){
+                    res.send(templateHTML);
+                });
+            });
+    });
+
+    app.post('/newAccount',function(req, res){
+        addUser(req,res);
+    });
+
+
+    app.get('/logout', function(req, res) {
+        if (req.session) { req.session.destroy(function(){}); }
+        res.redirect('/login');
+    });
 
     app.get('/archAccounts',function(req, res){
 
@@ -201,6 +311,16 @@ var fetchCoreData = function(url,name,req,cb){
         }
 
     });
+
+};
+
+var verifyUser = function(req, res, next) {
+
+    if (req.session.user) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
 
 };
 
