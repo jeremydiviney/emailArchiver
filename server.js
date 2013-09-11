@@ -39,9 +39,6 @@ fs.readdirSync(partials).forEach(function(file) {
     Handlebars.registerPartial(partial, source);
 });
 
-
-
-
     var MongoStore = require('connect-mongo')(express);
 
     app.use(express.compress());
@@ -71,11 +68,21 @@ fs.readdirSync(partials).forEach(function(file) {
 //        imapProc.getEmails(2);
 //    },12500);
 
-    app.get('/',function(req, res){
+    var verifyUser = function(req, res, next) {
+
+        if (req.session.user) {
+            next();
+        } else {
+            res.redirect('/login');
+        }
+
+    };
+
+    app.get('/',verifyUser,function(req, res){
             getContextData(req,
             {}
             ,function(req){
-                getTemplate('dashboard',req.contextData,function(templateHTML){
+                render('dashboard',req.contextData,function(templateHTML){
                     res.send(templateHTML);
                 });
             });
@@ -95,17 +102,10 @@ app.post('/login', function(req, res) {
             if (pass === user.password) {
 
                 if (err) { res.redirect('/login?error=' + encodeURIComponent('There was an error. Please try again.')); }
-
-                // Check if user has access to specified firm.
-
-                if (user.firms && user.firms.indexOf(req.body.firmid) > -1) {
-                    req.session.user = user._id;
-                    req.session.email = user.email;
-                    req.session.accountId = user.accountId;
-                    res.redirect('/');
-                } else {
-                    res.redirect('/login?error=' + encodeURIComponent('No account found for that username and password.'));
-                }
+                req.session.user = user._id;
+                req.session.email = user.email;
+                req.session.accountId = user.accountId;
+                res.redirect('/');
 
             } else {
                 res.redirect('/login?error=' + encodeURIComponent('No account found for that username and password.'));
@@ -124,12 +124,11 @@ app.post('/login', function(req, res) {
             {}
             ,function(req){
                 req.contextData.error = req.query.error;
-                getTemplate('login',req.contextData,function(templateHTML){
+                render('login',req.contextData,function(templateHTML){
                     res.send(templateHTML);
                 });
             });
     });
-
 
     var createUser = function (req) {
 
@@ -185,7 +184,7 @@ app.post('/login', function(req, res) {
             {}
             ,function(req){
                 req.contextData.error = req.query.error;
-                getTemplate('newUser',req.contextData,function(templateHTML){
+                render('newUser',req.contextData,function(templateHTML){
                     res.send(templateHTML);
                 });
             });
@@ -201,23 +200,24 @@ app.post('/login', function(req, res) {
         res.redirect('/login');
     });
 
-    app.get('/archAccounts',function(req, res){
+    app.get('/archAccounts',verifyUser,function(req, res){
 
         getContextData(req,
             {archAccounts:'http://localhost:1223/api/v0/archAccounts'}
             ,function(req){
-                getTemplate('archiveAccounts',req.contextData,function(templateHTML){
+                render('archiveAccounts',req.contextData,function(templateHTML){
                     res.send(templateHTML);
                 });
         });
 
     });
 
-    app.post('/archAccounts/add',function(req, res){
+    app.post('/archAccounts/add',verifyUser,function(req, res){
 
         var collection = db.collection('archiveAccounts');
 
         collection.insert({
+            accountId:req.session.user,
             host:req.body.host,
             userName:req.body.userName,
             password:req.body.pwd,
@@ -228,7 +228,7 @@ app.post('/login', function(req, res) {
         });
     });
 
-    app.get('/archAccounts/remove/:id',function(req, res){
+    app.get('/archAccounts/remove/:id',verifyUser,function(req, res){
 
         var collection = db.collection('archiveAccounts');
         console.log("REMOVE ID:",req.params.id);
@@ -245,7 +245,7 @@ app.post('/login', function(req, res) {
 
     var templateStore = {};
 
-    var getTemplate = function(templateName,contextData,cb){
+    var render = function(templateName,contextData,cb){
 
         if(templateStore[templateName]){
             cb(templateStore[templateName](contextData));
@@ -281,6 +281,8 @@ var getContextData = function(req,apiList,cb){
 //        firm: 'http://localhost:1221/api/v1/firms/' + req.session.domain + "?key=b4t123",
 //        user: 'http://localhost:1221/api/v1/users/' + req.session.user + "?key=b4t123"
 //    }
+    req.contextData = req.contextData || {};
+    req.contextData.session =  req.session;
 
     for(var i in apiList){
         cnt++;
@@ -288,7 +290,6 @@ var getContextData = function(req,apiList,cb){
     }
 
     if(cnt === 0){
-        req.contextData = req.contextData || {};
         cb(req);
     }
 
@@ -298,7 +299,12 @@ var fetchCoreData = function(url,name,req,cb){
 
     req.conextFetchCount++;
 
-    request.get({uri:url}, function(err, r, body) {
+    request.get({
+        uri:url,
+        headers:{
+            cookie:req.headers.cookie
+        }
+    }, function(err, r, body) {
 
         req.conextFetchCount--;
         req.contextData = req.contextData || {};
@@ -314,15 +320,6 @@ var fetchCoreData = function(url,name,req,cb){
 
 };
 
-var verifyUser = function(req, res, next) {
-
-    if (req.session.user) {
-        next();
-    } else {
-        res.redirect('/login');
-    }
-
-};
 
 // Start Server
 

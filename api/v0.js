@@ -16,8 +16,8 @@ var getArchiveAccounts = function(req,res){
 
     var query = {};
     if(req.params.id)query._id = req.params.id;
-
-    archiveAccounts.find({}).toArray(function(err,items){
+    console.log(req.session.user);
+    archiveAccounts.find({accountId:req.session.user}).toArray(function(err,items){
         //console.log(items);
         res.json(items);
     });

@@ -1,5 +1,10 @@
 <a href="/">Home</a> |
 <a href="/archAccounts">Archive Accounts</a> |
-<a href="/logout">Logout</a> |
+{{#if session.user}}
+<a href="/logout">Logout</a>
+{{else}}
+<a href="/login">Login</a> |
 <a href="/newAccount">Create Account</a>
+{{/if}}
+
 
