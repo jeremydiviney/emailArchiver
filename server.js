@@ -63,10 +63,26 @@ fs.readdirSync(partials).forEach(function(file) {
 
     var imapProc = require('./imapArchiver');
 
-//    setInterval(function(){
-//        imapProc.getEmails(1);
-//        imapProc.getEmails(2);
-//    },12500);
+    var curArchiveIndex = 0;
+
+    setInterval(function(){
+
+        db.collection('archiveAccounts').count({active:{$ne:false}},function(err,count){
+
+            if(curArchiveIndex >= count)curArchiveIndex=0;
+
+            db.collection('archiveAccounts').find({active:{$ne:false}},{limit:1,skip:curArchiveIndex}).toArray(function(err,items){
+
+                curArchiveIndex++;
+                console.log('---->',items[0]);
+                imapProc.getEmails(items[0]._id);
+            });
+
+        });
+
+        //imapProc.getEmails(1);
+        //imapProc.getEmails(2);
+    },13000);
 
     var verifyUser = function(req, res, next) {
 
@@ -320,9 +336,7 @@ var fetchCoreData = function(url,name,req,cb){
 
 };
 
-
 // Start Server
-
 app.listen(1223);
 console.log('Listening on Port 1221.');
 
