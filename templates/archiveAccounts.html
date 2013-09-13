@@ -21,7 +21,7 @@
     <BR><BR><BR>
 
     <h2>Current Archive Accounts</h2>
-        <table>
+        <table width="90%">
         <tr><th>Host</th><th>UserName</th><th>Password</th><th>Port</th></tr>
         {{#each archAccounts}}
         <tr>
@@ -29,6 +29,8 @@
             <td>{{userName}}</td>
             <td>*************</td>
             <td>port</td>
+            <td><a href="/archAccounts/{{_id}}">Details</a></td>
+            <BR><BR>
             <td><a href="/archAccounts/remove/{{_id}}">Delete</a></td>
         </tr>
         {{/each}}

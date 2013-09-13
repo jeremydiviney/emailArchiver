@@ -69,13 +69,27 @@ fs.readdirSync(partials).forEach(function(file) {
 
         db.collection('archiveAccounts').count({active:{$ne:false}},function(err,count){
 
+            var curDate = new Date();
+            var farDate = new Date (curDate.getTime() - 15*60000);
+            var nearDate = new Date (curDate.getTime() - 5*60000);
+
             if(curArchiveIndex >= count)curArchiveIndex=0;
 
-            db.collection('archiveAccounts').find({active:{$ne:false}},{limit:1,skip:curArchiveIndex}).toArray(function(err,items){
-
-                curArchiveIndex++;
-                console.log('---->',items[0]);
-                imapProc.getEmails(items[0]._id);
+            db.collection('archiveAccounts').find({
+                $and:[
+                    {active:{$ne:false}},
+                    {$or:[{lastCheckedDate:{$lt:farDate}},{lastUpdateCount:{$gt:0}},{lastUpdateCount:null}]},
+                    {lastCheckedDate:{$lt:nearDate}}
+                    ]},
+                {limit:1,skip:curArchiveIndex}
+            ).toArray(function(err,items){
+                if(items && items.length > 0){
+                    curArchiveIndex++;
+                    console.log('---->',items[0]);
+                    imapProc.getEmails(items[0]._id);
+                } else{
+                    console.log('None To Process.. Wait a bit!');
+                }
             });
 
         });
@@ -103,7 +117,6 @@ fs.readdirSync(partials).forEach(function(file) {
                 });
             });
     });
-
 
 app.post('/login', function(req, res) {
 
@@ -253,6 +266,37 @@ app.post('/login', function(req, res) {
             res.redirect('/archAccounts/');
         });
     });
+
+    app.get('/archAccounts/:id',verifyUser,function(req, res){
+
+        var conData = {archAccounts:'http://localhost:1223/api/v0/archAccounts/' + req.params.id};
+
+        getContextData(req,conData,
+            function(req){
+                render('archiveDetails',req.contextData,function(templateHTML){
+                    res.send(templateHTML);
+                });
+            });
+    });
+
+    app.post('/archAccounts/:id',verifyUser,function(req, res){
+
+        var conData = {archAccounts:'http://localhost:1223/api/v0/archAccounts/' + req.params.id};
+
+        if(req.body.searchtxt){
+            console.log("searching" + req.body.searchtxt);
+            conData.searchItems = 'http://localhost:1223/api/v0/archAccounts/' + req.params.id + '/search?searchtxt=' + encodeURIComponent(req.body.searchtxt);
+        }
+
+        getContextData(req,conData,
+            function(req){
+                render('archiveDetails',req.contextData,function(templateHTML){
+                    res.send(templateHTML);
+                });
+            });
+    });
+
+
 
     // Setup 404 Route
     app.get('*', function(req, res) {

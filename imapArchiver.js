@@ -101,6 +101,8 @@ var getEmails = function(archiveAccountId){
                                 console.log(emails);
 
                                 updateMaxUidFromEmails(archiveAccountId,emails);
+                                setUpdateCount(archiveAccountId,emails.length);
+
                                 parseEmail(emails,0);
 
                             });
@@ -111,10 +113,12 @@ var getEmails = function(archiveAccountId){
 
                             if(archAccount.maxUID < box.uidnext){
                                 console.log('UID GAP!!!, setting new max id');
-                                setMaxUid(1,archAccount.maxUID+50);
+                                setMaxUid(archiveAccountId,archAccount.maxUID+50);
                             }else{
                                 console.log('Imap Account Up To Date');
                             }
+
+                            setUpdateCount(archiveAccountId,0);
 
                         }
 
@@ -152,7 +156,12 @@ var updateMaxUidFromEmails = function(archiveAccountID,emails){
 
 var setMaxUid = function(archiveAccountID,newUID){
     console.log("Updating maxUID: " + newUID, archiveAccountID );
-    db.collection('archiveAccounts').update({_id:archiveAccountID},{$set:{maxUID:newUID}})
+    db.collection('archiveAccounts').update({_id:archiveAccountID},{$set:{maxUID:newUID,lastCheckedDate:new Date()}})
+}
+
+var setUpdateCount = function(archiveAccountID,count){
+    console.log("Updating Last Count: " + count, archiveAccountID );
+    db.collection('archiveAccounts').update({_id:archiveAccountID},{$set:{lastUpdateCount:count}})
 }
 
 var setArchiveInProcFlag = function(archiveAccountID,inFlag){

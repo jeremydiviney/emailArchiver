@@ -3,21 +3,54 @@ var fs = require('fs');
 var express = require('express');
 var mongo = require('mongoskin');
 var db = mongo.db('localhost:27017/emailArch?auto_reconnect');
-var archiveAccounts = db.collection('archiveAccounts');
+var archiveAccountsCollection = db.collection('archiveAccounts');
+var emailsCollection = db.collection('emails');
 var apiVersionPrefix = "v0";
+
+var BSON = mongo.BSONPure;
 
 exports.init = function(app){
 
     app.get( '/api/' + apiVersionPrefix + '/archAccounts',getArchiveAccounts);
 
+    app.get( '/api/' + apiVersionPrefix + '/archAccounts/:id',getArchiveAccounts);
+
+    app.get( '/api/' + apiVersionPrefix + '/archAccounts/:id/search',searchArchive);
 }
 
 var getArchiveAccounts = function(req,res){
 
-    var query = {};
-    if(req.params.id)query._id = req.params.id;
-    console.log(req.session.user);
-    archiveAccounts.find({accountId:req.session.user}).toArray(function(err,items){
+    var query = {accountId:req.session.user};
+    if(req.params.id)query = {_id: new BSON.ObjectID(req.params.id)};
+
+    console.log(query);
+
+    if(query._id){
+        archiveAccountsCollection.findOne(query,function(err,items){
+            //console.log(items);
+            res.json(items);
+        });
+    }else{
+        archiveAccountsCollection.find(query).toArray(function(err,items){
+            //console.log(items);
+            res.json(items);
+        });
+    }
+
+}
+
+var searchArchive = function(req,res){
+
+    var query = {archiveAccountId: new BSON.ObjectID(req.params.id),
+            $or:[
+                {"headers.from":{$regex: req.query.searchtxt,$options:'i'}}//,
+                //{html:{$regex: req.query.searchtxt,$options:'i'}}
+            ]
+    };
+
+    console.log(query);
+
+    emailsCollection.find(query).toArray(function(err,items){
         //console.log(items);
         res.json(items);
     });
