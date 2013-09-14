@@ -43,14 +43,15 @@ var searchArchive = function(req,res){
 
     var query = {archiveAccountId: new BSON.ObjectID(req.params.id),
             $or:[
-                {"headers.from":{$regex: req.query.searchtxt,$options:'i'}}//,
-                //{html:{$regex: req.query.searchtxt,$options:'i'}}
+                {"headers.from":{$regex: ".*" + req.query.searchtxt +  ".*",$options:'i'}},
+                {"headers.subject":{$regex:  ".*" + req.query.searchtxt +  ".*",$options:'i'}}//,
+                //{"headers.from":{$regex: req.query.searchtxt,$options:'i'}}
             ]
     };
 
     console.log(query);
 
-    emailsCollection.find(query).toArray(function(err,items){
+    emailsCollection.find(query,{},{sort:{_emailProps:-1}}).toArray(function(err,items){
         //console.log(items);
         res.json(items);
     });

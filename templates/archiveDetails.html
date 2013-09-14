@@ -16,6 +16,24 @@
 
 <div>
 
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>from</th>
+            <th>to</th>
+            <th>body</th>
+        </tr>
+        {{#each searchItems}}
+        <tr>
+            <td>{{headers.date}}</td>
+            <td>{{headers.from}}</td>
+            <td>{{headers.to}}</td>
+            <td>{{subject}}</td>
+        </tr>
+        {{/each}}
+
+    </table>
+
 
 </div>
 
