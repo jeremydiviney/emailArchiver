@@ -23,21 +23,21 @@ var numCPUs = 50;
 //}else{
 
 
-// Configure Server Variables
-var app = express();
+    // Configure Server Variables
+    var app = express();
 
-app.engine('html', consolidate.handlebars);
-app.set('view engine', 'html');
-app.set('views', __dirname + '/public/templates');
+    app.engine('html', consolidate.handlebars);
+    app.set('view engine', 'html');
+    app.set('views', __dirname + '/public/templates');
 
-// Configure Environmental Variables
+    // Configure Environmental Variables
 
-var partials = __dirname + '/templates/partials/';
-fs.readdirSync(partials).forEach(function(file) {
-    var source = fs.readFileSync(partials + file, 'utf8');
-    var partial = /(.+)\.html/.exec(file).pop();
-    Handlebars.registerPartial(partial, source);
-});
+    var partials = __dirname + '/templates/partials/';
+    fs.readdirSync(partials).forEach(function(file) {
+        var source = fs.readFileSync(partials + file, 'utf8');
+        var partial = /(.+)\.html/.exec(file).pop();
+        Handlebars.registerPartial(partial, source);
+    });
 
     var MongoStore = require('connect-mongo')(express);
 
@@ -70,8 +70,8 @@ fs.readdirSync(partials).forEach(function(file) {
         db.collection('archiveAccounts').count({active:{$ne:false}},function(err,count){
 
             var curDate = new Date();
-            var farDate = new Date (curDate.getTime() - 15*60000);
-            var nearDate = new Date (curDate.getTime() - 5*60000);
+            var farDate = new Date (curDate.getTime() - 1*60000);
+            var nearDate = new Date (curDate.getTime() -.5*60000);
 
             if(curArchiveIndex >= count)curArchiveIndex=0;
 
@@ -251,6 +251,9 @@ app.post('/login', function(req, res) {
             userName:req.body.userName,
             password:req.body.pwd,
             port:req.body.port,
+            active:true,
+            lastUpdateCount:0,
+            lastCheckedDate:new Date('2000-01-01'),
             maxUID:0
         },function(err,docs){
             res.redirect('/archAccounts/');
