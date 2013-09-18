@@ -5,6 +5,8 @@ var mongo = require('mongoskin');
 var db = mongo.db('localhost:27017/emailArch?auto_reconnect');
 var collection = db.collection('emails');
 
+var encryptStuff = require("./cryptStuff");
+
 
 var openInbox = function(imap,cb) {
     imap.openBox('INBOX', true, cb);
@@ -29,7 +31,7 @@ var getEmails = function(archiveAccountId){
 
             var imap = new Imap({
                 user: archAccount.userName,
-                password: archAccount.password,
+                password: encryptStuff.decryptData(archAccount.password),
                 host: archAccount.host,
                 port: archAccount.port,
                 tls: true,

@@ -8,6 +8,9 @@ var Handlebars = require('handlebars');
 var mongo = require('mongoskin');
 var db = mongo.db('localhost:27017/emailArch?auto_reconnect');
 var crypto = require('crypto');
+var BSON = mongo.BSONPure;
+
+var encryptStuff = require("./cryptStuff");
 
 var numCPUs = 50;
 
@@ -245,10 +248,10 @@ app.post('/login', function(req, res) {
         var collection = db.collection('archiveAccounts');
 
         collection.insert({
-            accountId:req.session.user,
+            accountId:BSON.ObjectID(req.session.user),
             host:req.body.host,
-            userName:BSON.ObjectID(req.body.userName),
-            password:req.body.pwd,
+            userName:req.body.userName,
+            password:encryptStuff.encryptData(req.body.pwd),
             port:req.body.port,
             active:true,
             lastUpdateCount:0,
@@ -383,23 +386,6 @@ var fetchCoreData = function(url,name,req,cb){
 
 };
 
-
-var phrase = "hello hello";
-
-console.log(crypto.getCiphers());
-
-console.log(phrase);
-
-var cipher = crypto.createCipher("des", "test123");
-//phrase =
-//phrase =
-
-console.log(phrase);
-
-var decipher = crypto.createDecipher("des",  "test123");
-phrase = decipher.update( cipher.update(phrase, "binary", "hex"), "hex", "binary")
-
-console.log(phrase);
 
 
 // Start Server
