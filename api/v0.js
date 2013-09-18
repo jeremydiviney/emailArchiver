@@ -20,7 +20,7 @@ exports.init = function(app){
 
 var getArchiveAccounts = function(req,res){
 
-    var query = {accountId:req.session.user};
+    var query = {accountId:BSON.ObjectID(req.session.user)};
     if(req.params.id)query = {_id: new BSON.ObjectID(req.params.id)};
 
     console.log(query);

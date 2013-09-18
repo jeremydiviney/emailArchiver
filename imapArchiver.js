@@ -41,7 +41,15 @@ var getEmails = function(archiveAccountId){
 
                 openInbox(imap,function(err, box) {
                     console.log(err);
-                    if (err) throw err;
+                    if (err) {
+                        console.log("IMAP Inbox Error: ", err);
+                        setArchiveInProcFlag(archiveAccountId,false);
+                        imap.end();
+                        return;
+                    }
+
+                    console.log("IMAP Login Success:");
+
                     var startUID,topUID;
 
                     if(!archAccount.maxUID)archAccount.maxUID = 1;
@@ -128,7 +136,11 @@ var getEmails = function(archiveAccountId){
 
             imap.once('error', function(err) {
                 imap.end();
-                console.log(err);
+                console.log("IMAP Error: ", err);
+                setArchiveInProcFlag(archiveAccountId,false);
+                imap.end();
+                return;
+
             });
 
             imap.once('end', function() {

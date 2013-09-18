@@ -22,7 +22,6 @@ var numCPUs = 50;
 //
 //}else{
 
-
     // Configure Server Variables
     var app = express();
 
@@ -223,11 +222,11 @@ app.post('/login', function(req, res) {
         addUser(req,res);
     });
 
-
     app.get('/logout', function(req, res) {
         if (req.session) { req.session.destroy(function(){}); }
         res.redirect('/login');
     });
+
 
     app.get('/archAccounts',verifyUser,function(req, res){
 
@@ -248,7 +247,7 @@ app.post('/login', function(req, res) {
         collection.insert({
             accountId:req.session.user,
             host:req.body.host,
-            userName:req.body.userName,
+            userName:BSON.ObjectID(req.body.userName),
             password:req.body.pwd,
             port:req.body.port,
             active:true,
@@ -258,6 +257,7 @@ app.post('/login', function(req, res) {
         },function(err,docs){
             res.redirect('/archAccounts/');
         });
+
     });
 
     app.get('/archAccounts/remove/:id',verifyUser,function(req, res){
@@ -382,6 +382,25 @@ var fetchCoreData = function(url,name,req,cb){
     });
 
 };
+
+
+var phrase = "hello hello";
+
+console.log(crypto.getCiphers());
+
+console.log(phrase);
+
+var cipher = crypto.createCipher("des", "test123");
+//phrase =
+//phrase =
+
+console.log(phrase);
+
+var decipher = crypto.createDecipher("des",  "test123");
+phrase = decipher.update( cipher.update(phrase, "binary", "hex"), "hex", "binary")
+
+console.log(phrase);
+
 
 // Start Server
 app.listen(1223);
