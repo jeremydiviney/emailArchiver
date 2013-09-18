@@ -7,6 +7,8 @@ var collection = db.collection('emails');
 
 var encryptStuff = require("./cryptStuff");
 
+var imapBatchSize = 100;
+
 
 var openInbox = function(imap,cb) {
     imap.openBox('INBOX', true, cb);
@@ -56,7 +58,7 @@ var getEmails = function(archiveAccountId){
 
                     if(!archAccount.maxUID)archAccount.maxUID = 1;
 
-                    topUID = Math.min(box.uidnext,(archAccount.maxUID < 1 ? 1 : archAccount.maxUID+50) );
+                    topUID = Math.min(box.uidnext,(archAccount.maxUID < 1 ? 1 : archAccount.maxUID+imapBatchSize) );
                     startUID = ((archAccount.maxUID < 1 ? 1 : archAccount.maxUID));
 
                     console.log(startUID + ':' + topUID);
@@ -123,7 +125,7 @@ var getEmails = function(archiveAccountId){
 
                             if(archAccount.maxUID < box.uidnext){
                                 console.log('UID GAP!!!, setting new max id');
-                                setMaxUid(archiveAccountId,archAccount.maxUID+50);
+                                setMaxUid(archiveAccountId,archAccount.maxUID+imapBatchSize);
                             }else{
                                 console.log('Imap Account Up To Date');
                             }
