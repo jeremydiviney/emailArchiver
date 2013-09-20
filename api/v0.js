@@ -51,7 +51,7 @@ var searchArchive = function(req,res){
 
     console.log(query);
 
-    emailsCollection.find(query,{headers:1,_emailProps:1},{sort:{"_emailProps.date":-1}}).toArray(function(err,items){
+    emailsCollection.find(query,{headers:1,_emailProps:1,subject:1},{sort:{"_emailProps.date":-1}}).toArray(function(err,items){
         //console.log(items);
         console.log("Search Done:",query,err);
         res.json(items);

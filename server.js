@@ -98,7 +98,7 @@ var numCPUs = 50;
 
         //imapProc.getEmails(1);
         //imapProc.getEmails(2);
-    },13000);
+    },13000000);
 
     var verifyUser = function(req, res, next) {
 
