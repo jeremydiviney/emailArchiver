@@ -10,9 +10,16 @@ var db = mongo.db('localhost:27017/emailArch?auto_reconnect');
 var crypto = require('crypto');
 var BSON = mongo.BSONPure;
 
+var zlib = require('zlib');
+
+var Sync = require('sync');
+
+var Buffer = require('buffer').Buffer;
+
+
 var encryptStuff = require("./cryptStuff");
 
-var numCPUs = 50;
+var numCPUs = 100;
 
 // Initialize Server and Session Storage
 
@@ -385,6 +392,24 @@ var fetchCoreData = function(url,name,req,cb){
     });
 
 };
+
+var tmp = Buffer('aslkdfjlaskdjflaskdjfalskdfjadslkfjalsdkjfaslkdfjaslkdfjlaskdjflaskdjfalskdfjadslkfjalsdkjfaslkdfjaslkdfjlaskdjflaskdjfalskdfjadslkfjalsdkjfaslkdfjaslkdfjlaskdjflaskdjfalskdfjadslkfjalsdkjfaslkdfjaslkdfjlaskdjflaskdjfalskdfjadslkfjalsdkjfaslkdfjaslkdfjlaskdjflaskdjfalskdfjadslkfjalsdkjfaslkdfj');
+
+
+Sync(function(){
+    console.log(tmp);
+    var comp = zlib.gzip.sync(null,tmp);
+    console.log("sdfsd:" + comp);
+    var out = zlib.gunzip.sync(null,comp);
+    console.log("sdfsd" + out);
+
+});
+
+console.log("done!!!");
+
+
+
+
 
 
 

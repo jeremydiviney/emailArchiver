@@ -7,6 +7,12 @@ var collection = db.collection('emails');
 
 var encryptStuff = require("./cryptStuff");
 
+var Buffer = require('buffer').Buffer;
+
+var zlib = require('zlib');
+
+var Sync = require('sync');
+
 var imapBatchSize = 100;
 
 
@@ -211,11 +217,28 @@ var parseEmail = function(emails,index){
                 //console.log("Attachments: " + mail_object.attachments.length)
             }
 
-            mail_object.archiveAccountId = emails[index].archiveAccountId;
-            mail_object._rawBody = emails[index].emailBody;
-            mail_object._emailSeq = emails[index].emailSeq;
-            mail_object._emailProps = emails[index].emailProps;
-            collection.insert(mail_object);
+            Sync(function(){
+
+                try{
+
+                    mail_object.archiveAccountId = emails[index].archiveAccountId;
+                    mail_object._rawBody = zlib.gzip.sync(null,emails[index].emailBody);
+                    mail_object.text = zlib.gzip.sync(null,mail_object.text);
+                    mail_object.html = zlib.gzip.sync(null,mail_object.html);
+                    mail_object._gzipFlag = true;
+                    mail_object._emailSeq = emails[index].emailSeq;
+                    mail_object._emailProps = emails[index].emailProps;
+                    collection.insert(mail_object);
+                    console.log("inserted!!!!");
+
+                }catch(e){
+
+                    console.log("error: " + e);
+
+                }
+
+            });
+
 
             parseEmail(emails,index+1);
 
