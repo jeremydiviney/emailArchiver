@@ -223,8 +223,8 @@ var parseEmail = function(emails,index){
 
                     mail_object.archiveAccountId = emails[index].archiveAccountId;
                     mail_object._rawBody = zlib.gzip.sync(null,emails[index].emailBody);
-                    mail_object.text = zlib.gzip.sync(null,mail_object.text);
-                    mail_object.html = zlib.gzip.sync(null,mail_object.html);
+                    //mail_object.text = zlib.gzip.sync(null,mail_object.text);
+                    //mail_object.html = zlib.gzip.sync(null,mail_object.html);
                     mail_object._gzipFlag = true;
                     mail_object._emailSeq = emails[index].emailSeq;
                     mail_object._emailProps = emails[index].emailProps;
