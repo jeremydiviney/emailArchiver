@@ -79,27 +79,25 @@ var numCPUs = 100;
         db.collection('archiveAccounts').count({active:{$ne:false}},function(err,count){
 
             var curDate = new Date();
-            var farDate = new Date (curDate.getTime() - 1*60000);
-            var nearDate = new Date (curDate.getTime() -.5*60000);
+            var farDate = new Date (curDate.getTime() - 10*60000);
+            var nearDate = new Date (curDate.getTime() - 1*60000);
 
-            if(curArchiveIndex >= count)curArchiveIndex=0;
 
             db.collection('archiveAccounts').find({
-                $and:[
-                    {active:{$ne:false}},
-                    {$or:[{lastCheckedDate:{$lt:farDate}},{lastUpdateCount:{$gt:0}},{lastUpdateCount:null}]},
-                    {lastCheckedDate:{$lt:nearDate}}
+                    $and:[
+                        {active:{$ne:false}},
+                        {$or:[{lastCheckedDate:{$lt:farDate}},{lastUpdateCount:{$gt:0}},{lastUpdateCount:null}]},
+                        {lastCheckedDate:{$lt:nearDate}}
                     ]},
-                {limit:1,skip:curArchiveIndex}
+                {limit:1,sort:{lastCheckedDate:1}}
             ).toArray(function(err,items){
-                if(items && items.length > 0){
-                    curArchiveIndex++;
-                    console.log('---->',items[0]);
-                    imapProc.getEmails(items[0]._id);
-                } else{
-                    console.log('None To Process.. Wait a bit!');
-                }
-            });
+                    if(items && items.length > 0){
+                        console.log('---->',items[0]);
+                        imapProc.getEmails(items[0]._id);
+                    } else{
+                        console.log('None To Process.. Wait a bit!');
+                    }
+                });
 
         });
 
@@ -107,7 +105,9 @@ var numCPUs = 100;
         //imapProc.getEmails(2);
     },10000);
 
-    var verifyUser = function(req, res, next) {
+
+
+var verifyUser = function(req, res, next) {
 
         if (req.session.user) {
             next();

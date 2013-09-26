@@ -64,10 +64,11 @@ var getEmails = function(archiveAccountId){
 
                     if(!archAccount.maxUID)archAccount.maxUID = 1;
 
-                    topUID = Math.min(box.uidnext,(archAccount.maxUID < 1 ? 1 : archAccount.maxUID+imapBatchSize) );
+                    topUID = (archAccount.maxUID < 1 ? 1 : archAccount.maxUID+imapBatchSize);
                     startUID = ((archAccount.maxUID < 1 ? 1 : archAccount.maxUID));
 
-                    console.log(startUID + ':' + topUID);
+                    //console.log(startUID + ':' + topUID);
+                    console.log(JSON.stringify({topUID:topUID,startUID:startUID,boxMax:box.uidnext,curMaxId:archAccount.maxUID,incSize:imapBatchSize}));
 
                     imap.search([ 'ALL', ['UID', startUID + ':' + topUID ]], function(err, results) {
 
@@ -134,6 +135,7 @@ var getEmails = function(archiveAccountId){
                                 setMaxUid(archiveAccountId,archAccount.maxUID+imapBatchSize);
                             }else{
                                 console.log('Imap Account Up To Date');
+                                setMaxUid(archiveAccountId,archAccount.maxUID);
                             }
 
                             setUpdateCount(archiveAccountId,0);
